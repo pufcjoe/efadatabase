@@ -1,0 +1,302 @@
+/* ============================================================
+   EFA Panel — "floodlit teamsheet"
+   Deep pitch green base, chalk-line text, referee-card accents:
+   yellow = staff/warning, red = banned, green = active/on.
+   ============================================================ */
+
+:root {
+  --bg: #0e1412;
+  --surface: #16201b;
+  --surface-2: #1c2822;
+  --line: #29372f;
+  --text: #edf3ee;
+  --muted: #93a69a;
+  --chalk: #f4f8f4;
+  --green: #4ade80;
+  --yellow: #facc15;
+  --red: #f87171;
+  --font-display: 'Saira Condensed', sans-serif;
+  --font-body: 'Archivo', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
+input, select { font-family: inherit; }
+
+/* ---- layout ---- */
+
+.shell { display: flex; min-height: 100vh; }
+
+.rail {
+  width: 210px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--line);
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.rail .wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: 3px;
+  color: var(--chalk);
+  margin-bottom: 4px;
+}
+.rail .wordmark span { color: var(--green); }
+.rail .tagline {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.rail a {
+  padding: 9px 12px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-weight: 500;
+  border-left: 2px solid transparent;
+}
+.rail a:hover { color: var(--text); background: var(--surface); }
+.rail a.active { color: var(--chalk); background: var(--surface); border-left-color: var(--green); }
+
+.rail .session {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.rail .session .who { color: var(--chalk); font-weight: 600; }
+.rail .session .role { color: var(--muted); font-size: 12px; }
+
+.main { flex: 1; padding: 32px 40px; max-width: 1100px; }
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--chalk);
+  margin-bottom: 20px;
+}
+
+/* ---- controls ---- */
+
+.input, select.input {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 14px;
+  outline: none;
+}
+.input:focus { border-color: var(--green); }
+
+.btn {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 9px 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--green); border-color: var(--green); color: #08130c; }
+.btn.danger { background: transparent; border-color: var(--red); color: var(--red); }
+.btn.danger:hover { background: var(--red); color: #140808; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+.toolbar .input { min-width: 220px; }
+
+/* ---- table (teamsheet) ---- */
+
+.sheet { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.sheet table { width: 100%; border-collapse: collapse; }
+.sheet th {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.sheet td { padding: 11px 14px; border-bottom: 1px solid var(--line); }
+.sheet tr:last-child td { border-bottom: none; }
+.sheet tbody tr { border-left: 3px solid transparent; }
+.sheet tbody tr:hover { background: var(--surface); }
+.sheet tbody tr.banned { border-left-color: var(--red); }
+.sheet tbody tr.staffed { border-left-color: var(--yellow); }
+.sheet .uname { color: var(--chalk); font-weight: 600; }
+.sheet .uid { color: var(--muted); font-size: 12px; }
+
+/* ---- chips & badges ---- */
+
+.chip {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.chip.on { border-color: var(--green); color: var(--green); }
+.chip.warn { border-color: var(--yellow); color: var(--yellow); }
+.chip.bad { border-color: var(--red); color: var(--red); }
+
+/* ---- squad card (player profile header) ---- */
+
+.squad-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(160deg, var(--surface-2), var(--surface));
+  padding: 26px 28px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.squad-card::before {
+  /* chalk halfway line */
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0; right: 130px;
+  width: 2px;
+  background: rgba(244, 248, 244, 0.07);
+}
+.squad-card .flag { font-size: 26px; margin-right: 8px; }
+.squad-card .name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 44px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--chalk);
+  line-height: 1.05;
+}
+.squad-card .meta { color: var(--muted); margin-top: 6px; display: flex; gap: 16px; flex-wrap: wrap; }
+.squad-card .meta b { color: var(--text); font-weight: 600; }
+
+/* ---- edit grid ---- */
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+
+.field-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.field-card .label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.field-card .value { color: var(--chalk); font-weight: 600; margin-top: 2px; }
+.field-card.locked { opacity: 0.6; }
+
+/* toggle */
+.toggle {
+  width: 44px; height: 24px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  position: relative;
+  flex-shrink: 0;
+}
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.toggle.on { border-color: var(--green); }
+.toggle.on::after { transform: translateX(20px); background: var(--green); }
+.toggle:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ---- sections / misc ---- */
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 28px 0 12px;
+}
+
+.notice { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
+.notice.error { border: 1px solid var(--red); color: var(--red); }
+.notice.ok { border: 1px solid var(--green); color: var(--green); }
+
+.pager { display: flex; gap: 10px; align-items: center; margin-top: 14px; color: var(--muted); font-size: 13px; }
+
+/* ---- login ---- */
+
+.login-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse 700px 320px at 50% -60px, rgba(74, 222, 128, 0.09), transparent),
+    var(--bg);
+}
+.login-card { width: 340px; text-align: center; }
+.login-card .wordmark {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 58px;
+  letter-spacing: 6px;
+  color: var(--chalk);
+}
+.login-card .wordmark span { color: var(--green); }
+.login-card .sub { color: var(--muted); margin: 4px 0 30px; letter-spacing: 2px; text-transform: uppercase; font-size: 12px; }
+.login-card .btn { width: 100%; padding: 13px; margin-bottom: 12px; font-size: 15px; }
+
+@media (max-width: 760px) {
+  .shell { flex-direction: column; }
+  .rail { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .rail .tagline, .rail .session .role { display: none; }
+  .rail .session { margin: 0 0 0 auto; padding: 0; border: none; }
+  .main { padding: 20px 16px; }
+  .squad-card .name { font-size: 32px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toggle::after { transition: none; }
+}
