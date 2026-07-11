@@ -11,7 +11,7 @@ export default function TeamsPage() {
     const isBoard = ['board', 'owner'].includes(me.role);
 
     const load = () => api.teams().then(r => setTeams(r.teams)).catch(e => setMsg({ kind: 'error', text: e.message }));
-    useEffect(load, []);
+    useEffect(() => { load(); }, []);
 
     const create = async () => {
         setMsg(null);
