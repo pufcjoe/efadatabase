@@ -38,13 +38,18 @@ function setStateCookie(res, name, value) {
 async function upsertRobloxPlayer(userId, username) {
     // Never touches role fields — new players get schema defaults,
     // existing players only get their username refreshed.
-    const { data: existing } = await supabase
+    // Errors are thrown so DB failures land in the logs instead of
+    // silently producing a login with no player row.
+    const { data: existing, error: selErr } = await supabase
         .from('players').select('user_id').eq('user_id', userId).maybeSingle();
+    if (selErr) throw new Error(`Supabase select failed: ${selErr.message}`);
 
     if (existing) {
-        await supabase.from('players').update({ username }).eq('user_id', userId);
+        const { error } = await supabase.from('players').update({ username }).eq('user_id', userId);
+        if (error) throw new Error(`Supabase update failed: ${error.message}`);
     } else {
-        await supabase.from('players').insert({ user_id: userId, username });
+        const { error } = await supabase.from('players').insert({ user_id: userId, username });
+        if (error) throw new Error(`Supabase insert failed: ${error.message}`);
     }
 }
 
@@ -168,6 +173,8 @@ router.get('/discord/callback', async (req, res) => {
                 // unique violation → that Discord is linked to someone else
                 return res.redirect(`${PANEL_URL()}/me?error=discord_taken`);
             }
+            // Instantly sync their Discord nickname/roles (no-op if bot disabled)
+            require('../discord/bot').syncMember(me.id).catch(() => {});
             return res.redirect(`${PANEL_URL()}/me?linked=1`);
         }
 
