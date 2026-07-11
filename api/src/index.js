@@ -23,7 +23,16 @@ app.use(helmet());
 // (e.g. Vite dev server, or a separately hosted panel). Same-domain
 // deploys don't hit this path at all.
 if (process.env.PANEL_URL) {
-    app.use(cors({ origin: process.env.PANEL_URL, credentials: true }));
+    // Accept the configured panel URL and its www/non-www twin,
+    // so www.example.com vs example.com can never break login.
+    const u = new URL(process.env.PANEL_URL);
+    const twin = u.hostname.startsWith('www.')
+        ? u.hostname.slice(4)
+        : 'www.' + u.hostname;
+    app.use(cors({
+        origin: [u.origin, `${u.protocol}//${twin}`],
+        credentials: true
+    }));
 }
 
 app.use(express.json());
@@ -61,3 +70,6 @@ if (fs.existsSync(DIST)) {
 }
 
 app.listen(PORT, () => console.log(`[EFA] API running on port ${PORT}`));
+
+// Discord verification bot (runs in this process; disabled if token unset)
+require('./discord/bot').start();
