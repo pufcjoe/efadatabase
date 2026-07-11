@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, flag, topRole } from '../api';
+import { PageState } from '../ui';
 
 export default function Directory() {
     const nav = useNavigate();
@@ -9,15 +10,19 @@ export default function Directory() {
     const [page, setPage] = useState(0);
     const [data, setData] = useState(null);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [tick, setTick] = useState(0); // bump to retry
 
     useEffect(() => {
+        setLoading(true);
+        setError('');
         const t = setTimeout(() => {
             api.players({ search, role, page })
-                .then(setData)
-                .catch(e => setError(e.message));
+                .then(d => { setData(d); setLoading(false); })
+                .catch(e => { setError(e.message); setLoading(false); });
         }, 250);
         return () => clearTimeout(t);
-    }, [search, role, page]);
+    }, [search, role, page, tick]);
 
     const pages = data ? Math.ceil(data.total / data.pageSize) : 0;
 
@@ -38,8 +43,7 @@ export default function Directory() {
                 </select>
             </div>
 
-            {error && <div className="notice error">{error}</div>}
-
+            <PageState loading={loading && !data} error={error} onRetry={() => setTick(t => t + 1)}>
             <div className="sheet">
                 <table>
                     <thead>
@@ -82,6 +86,7 @@ export default function Directory() {
                     <button className="btn" disabled={page + 1 >= pages} onClick={() => setPage(p => p + 1)}>Next</button>
                 </div>
             )}
+            </PageState>
         </>
     );
 }

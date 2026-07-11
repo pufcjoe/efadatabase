@@ -3,11 +3,24 @@
 const BASE = import.meta.env.VITE_API_URL || '';
 
 async function request(path, options = {}) {
-    const res = await fetch(`${BASE}${path}`, {
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-        ...options
-    });
+    let res;
+    try {
+        res = await fetch(`${BASE}${path}`, {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options
+        });
+    } catch {
+        // Network-level failure — most commonly the free-tier API waking from sleep
+        throw new Error('Could not reach the API — it may be waking up. Retry in a few seconds.');
+    }
+
+    // Session died mid-use (expired/rotated): bounce back to login
+    // instead of leaving pages half-broken. /auth/me handles its own 401.
+    if (res.status === 401 && path !== '/auth/me') {
+        window.dispatchEvent(new Event('efa:unauthorized'));
+    }
+
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || `Request failed (${res.status})`);
     return body;

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { api, flag, linkDiscordUrl, ROLE_LABELS, topRole } from '../api';
 import { useAuth } from '../App';
+import { PageState } from '../ui';
 
 function Toggle({ on, disabled, onChange }) {
     return (
@@ -20,10 +21,12 @@ export default function PlayerPage() {
     const [data, setData] = useState(null);
     const [teams, setTeams] = useState([]);
     const [msg, setMsg] = useState(null); // { kind, text }
+    const [loadError, setLoadError] = useState('');
     const [banReason, setBanReason] = useState('');
 
     const load = useCallback(() => {
-        api.player(userId).then(setData).catch(e => setMsg({ kind: 'error', text: e.message }));
+        setLoadError('');
+        api.player(userId).then(setData).catch(e => setLoadError(e.message));
         api.teams().then(r => setTeams(r.teams)).catch(() => {});
     }, [userId]);
 
@@ -34,7 +37,9 @@ export default function PlayerPage() {
         if (q.get('error') === 'discord_taken') setMsg({ kind: 'error', text: 'That Discord account is already linked to another player.' });
     }, [load]);
 
-    if (!data) return msg ? <div className="notice error">{msg.text}</div> : null;
+    if (!data) {
+        return <PageState loading={!loadError} error={loadError} onRetry={load}><span /></PageState>;
+    }
 
     const { player, editable, banHistory } = data;
     const isSelf = me.player.user_id === player.user_id;

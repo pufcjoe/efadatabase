@@ -43,6 +43,14 @@ export default function App() {
     const refresh = () => api.me().then(setMe).catch(() => setMe(null));
     useEffect(() => { refresh(); }, []);
 
+    // Any API call returning 401 (expired/rotated session) sends us
+    // back to the login screen instead of half-broken pages.
+    useEffect(() => {
+        const onDead = () => setMe(null);
+        window.addEventListener('efa:unauthorized', onDead);
+        return () => window.removeEventListener('efa:unauthorized', onDead);
+    }, []);
+
     if (me === undefined) return null;
 
     return (
