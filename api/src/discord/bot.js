@@ -63,12 +63,23 @@ async function syncMember(discordId) {
     const player = await playerByDiscordId(discordId);
     if (!player) return { ok: false, message: 'not_linked' };
 
-    // Nickname → Roblox username (fails harmlessly on members above the bot, e.g. the server owner)
+    await applySync(member, player);
+
+    if (player.is_banned) return { ok: true, message: `Synced — **${player.username}** is banned, roles removed.` };
+    return { ok: true, message: `Verified as **${player.username}**.` };
+}
+
+/**
+ * Core sync for one member against their known player row:
+ * nickname → Roblox username, roles → Verified + role flags
+ * (banned = all managed roles removed).
+ */
+async function applySync(member, player) {
+    // Nickname (fails harmlessly on members above the bot, e.g. the server owner)
     if (player.username && member.nickname !== player.username) {
         await member.setNickname(player.username).catch(() => {});
     }
 
-    // Work out which managed roles they SHOULD have
     const should = new Set();
     if (!player.is_banned) {
         if (process.env.VERIFIED_ROLE_ID) should.add(process.env.VERIFIED_ROLE_ID);
@@ -77,16 +88,12 @@ async function syncMember(discordId) {
         }
     }
 
-    // Apply the diff, only touching roles this bot manages
     const managed = managedRoleIds();
     const toAdd = [...should].filter(id => !member.roles.cache.has(id));
     const toRemove = managed.filter(id => member.roles.cache.has(id) && !should.has(id));
 
-    if (toAdd.length) await member.roles.add(toAdd).catch(err => console.error('[EFA bot] role add failed:', err.message));
-    if (toRemove.length) await member.roles.remove(toRemove).catch(err => console.error('[EFA bot] role remove failed:', err.message));
-
-    if (player.is_banned) return { ok: true, message: `Synced — **${player.username}** is banned, roles removed.` };
-    return { ok: true, message: `Verified as **${player.username}**.` };
+    if (toAdd.length) await member.roles.add(toAdd);
+    if (toRemove.length) await member.roles.remove(toRemove);
 }
 
 // ---- slash commands -----------------------------------------
@@ -98,6 +105,10 @@ const commands = [
     new SlashCommandBuilder()
         .setName('update')
         .setDescription('Re-sync your nickname and roles with the EFA database'),
+    new SlashCommandBuilder()
+        .setName('verifyall')
+        .setDescription('Sync every linked member\'s nickname and roles (staff only)')
+        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
     new SlashCommandBuilder()
         .setName('whois')
         .setDescription('Show the Roblox account linked to a Discord user')
@@ -137,6 +148,58 @@ async function handleInteraction(interaction) {
                 ? `You haven't linked yet — run **/verify** for instructions.`
                 : res.message;
             return interaction.editReply(msg);
+        }
+
+        if (interaction.commandName === 'verifyall') {
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+
+            // Authority comes from the DATABASE, not Discord perms alone
+            const invoker = await playerByDiscordId(interaction.user.id);
+            const isStaff = invoker && (invoker.is_staff || invoker.is_developer || invoker.is_board || invoker.is_owner);
+            if (!isStaff) return interaction.editReply('Staff only — and your own account must be linked.');
+
+            const guild = interaction.guild;
+            const members = await guild.members.fetch();
+
+            // One DB query for all linked players, instead of one per member
+            const { data: linked, error } = await supabase
+                .from('players').select('*').not('discord_id', 'is', null);
+            if (error) return interaction.editReply(`Database error: ${error.message}`);
+            const byDiscord = new Map(linked.map(p => [p.discord_id, p]));
+
+            let synced = 0, notLinked = 0, failed = 0, processed = 0;
+            const total = members.filter(m => !m.user.bot).size;
+
+            for (const member of members.values()) {
+                if (member.user.bot) continue;
+                processed++;
+
+                const player = byDiscord.get(member.id);
+                if (!player) { notLinked++; continue; }
+
+                try {
+                    await applySync(member, player);
+                    synced++;
+                } catch (err) {
+                    failed++;
+                    console.error(`[EFA bot] verifyall failed for ${member.id}:`, err.message);
+                }
+
+                // Pace role/nickname writes to stay clear of rate limits
+                await new Promise(r => setTimeout(r, 300));
+
+                if (processed % 25 === 0) {
+                    await interaction.editReply(
+                        `Syncing… ${processed}/${total} checked (${synced} synced so far)`
+                    ).catch(() => {});
+                }
+            }
+
+            return interaction.editReply(
+                `**Verify-all complete.**\n` +
+                `Synced: **${synced}** · Not linked: **${notLinked}**` +
+                (failed ? ` · Failed: **${failed}** (see logs)` : '')
+            );
         }
 
         if (interaction.commandName === 'whois') {
