@@ -11,10 +11,10 @@ const { canEditField, editableFields, requireMinRole, roleOf, FIELD_RULES } = re
 
 router.use(requireAuth);
 
-async function amTeamOf(player) {
-    if (!player.is_am) return null;
+async function managerTeamOf(player) {
+    if (!player.is_manager) return null;
     const { data } = await supabase
-        .from('teams').select('name').eq('am_user_id', player.user_id).maybeSingle();
+        .from('teams').select('name').eq('manager_user_id', player.user_id).maybeSingle();
     return data ? data.name : null;
 }
 
@@ -34,7 +34,7 @@ router.get('/players', async (req, res) => {
 
         let query = supabase
             .from('players')
-            .select('user_id, username, country, team, has_stadium_pass, is_banned, is_am, is_staff, is_developer, is_board, is_owner', { count: 'exact' })
+            .select('user_id, username, country, team, has_stadium_pass, is_banned, is_manager, is_staff, is_developer, is_board, is_owner', { count: 'exact' })
             .order('username', { ascending: true })
             .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
@@ -42,7 +42,7 @@ router.get('/players', async (req, res) => {
         if (req.query.team) query = query.eq('team', req.query.team);
         if (req.query.role) {
             const col = `is_${req.query.role}`;
-            if (['is_am', 'is_staff', 'is_developer', 'is_board', 'is_owner', 'is_banned'].includes(col)) {
+            if (['is_manager', 'is_staff', 'is_developer', 'is_board', 'is_owner', 'is_banned'].includes(col)) {
                 query = query.eq(col, true);
             }
         }
@@ -63,7 +63,7 @@ router.get('/players/:userId', async (req, res) => {
             .from('players').select('*').eq('user_id', req.params.userId).single();
         if (error || !target) return res.status(404).json({ error: 'Player not found' });
 
-        const team = await amTeamOf(req.player);
+        const team = await managerTeamOf(req.player);
         const { data: banHistory } = await supabase
             .from('bans').select('*')
             .eq('player_user_id', target.user_id)
@@ -89,7 +89,7 @@ router.patch('/players/:userId', async (req, res) => {
             .from('players').select('*').eq('user_id', req.params.userId).single();
         if (error || !target) return res.status(404).json({ error: 'Player not found' });
 
-        const team = await amTeamOf(req.player);
+        const team = await managerTeamOf(req.player);
         const patch = {};
         const changes = {};
 
@@ -177,7 +177,7 @@ router.get('/teams', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('teams')
-            .select('*, am:am_user_id (username)')
+            .select('*, manager:manager_user_id (username)')
             .order('name');
         if (error) throw error;
         res.json({ teams: data });
@@ -189,11 +189,11 @@ router.get('/teams', async (req, res) => {
 
 router.post('/teams', requireMinRole('staff'), async (req, res) => {
     try {
-        const { name, short_name, logo_asset_id, am_user_id } = req.body;
+        const { name, short_name, logo_asset_id, manager_user_id } = req.body;
         if (!name) return res.status(400).json({ error: 'Missing team name' });
         const { data, error } = await supabase
             .from('teams')
-            .insert({ name, short_name, logo_asset_id, am_user_id: am_user_id || null })
+            .insert({ name, short_name, logo_asset_id, manager_user_id: manager_user_id || null })
             .select().single();
         if (error) throw error;
         await audit('team_create', null, req.player.user_id, { name });
@@ -206,7 +206,7 @@ router.post('/teams', requireMinRole('staff'), async (req, res) => {
 
 router.patch('/teams/:id', requireMinRole('staff'), async (req, res) => {
     try {
-        const allowed = ['name', 'short_name', 'logo_asset_id', 'am_user_id'];
+        const allowed = ['name', 'short_name', 'logo_asset_id', 'manager_user_id'];
         const patch = {};
         for (const k of allowed) if (k in req.body) patch[k] = req.body[k];
         if (!Object.keys(patch).length) return res.status(400).json({ error: 'No fields to update' });

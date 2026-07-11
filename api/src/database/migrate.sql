@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS players (
     is_banned BOOLEAN DEFAULT FALSE,
 
     -- role flags (a player can hold several; highest wins for rank)
-    is_am BOOLEAN DEFAULT FALSE,             -- Assistant Manager
+    is_manager BOOLEAN DEFAULT FALSE,             -- Manager
     is_staff BOOLEAN DEFAULT FALSE,
     is_developer BOOLEAN DEFAULT FALSE,
     is_board BOOLEAN DEFAULT FALSE,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS teams (
     name TEXT UNIQUE NOT NULL,
     short_name TEXT,                          -- e.g. "SPA"
     logo_asset_id TEXT,                       -- Roblox decal ID
-    am_user_id BIGINT REFERENCES players(user_id) ON DELETE SET NULL,
+    manager_user_id BIGINT REFERENCES players(user_id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

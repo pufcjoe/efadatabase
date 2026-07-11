@@ -33,7 +33,7 @@ export default function Directory() {
                     <option value="board">Board</option>
                     <option value="developer">Developer</option>
                     <option value="staff">Staff</option>
-                    <option value="am">Assistant Manager</option>
+                    <option value="manager">Manager</option>
                     <option value="banned">Banned</option>
                 </select>
             </div>

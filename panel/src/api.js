@@ -42,7 +42,7 @@ export const ROLE_LABELS = {
     is_board: 'Board',
     is_developer: 'Developer',
     is_staff: 'Staff',
-    is_am: 'Assistant Manager'
+    is_manager: 'Manager'
 };
 
 export function topRole(p) {
@@ -50,6 +50,6 @@ export function topRole(p) {
     if (p.is_board) return 'Board';
     if (p.is_developer) return 'Developer';
     if (p.is_staff) return 'Staff';
-    if (p.is_am) return 'AM';
+    if (p.is_manager) return 'AM';
     return 'Player';
 }

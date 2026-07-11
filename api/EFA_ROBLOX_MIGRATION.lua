@@ -5,7 +5,7 @@
     Same URL shape as ARFA, new response fields.
     GET /data/:userId now returns:
       username, country, teamName, hasStadiumPass, isBanned,
-      isAM, isStaff, isDeveloper, isBoard, isOwner
+      isManager, isStaff, isDeveloper, isBoard, isOwner
     POST /submit/data only accepts identity: robloxId, username, country.
     Roles/bans/passes can ONLY change through the website panel.
     ============================================================
@@ -50,7 +50,7 @@ game.Players.PlayerAdded:Connect(function(plr)
 	plr:SetAttribute("StadPass", db.hasStadiumPass == true)
 
 	-- Topmost role: highest wins
-	if db.isAM then plr:SetAttribute("Topmost", "Assistant Manager") end
+	if db.isManager then plr:SetAttribute("Topmost", "Manager") end
 	if db.isStaff then plr:SetAttribute("Topmost", "Staff") end
 	if db.isDeveloper then plr:SetAttribute("Topmost", "Developer") end
 	if db.isBoard then plr:SetAttribute("Topmost", "Board") end

@@ -7,19 +7,19 @@ Replaces the old ARFA API + Discord bot. Two apps:
 
 ## Player fields
 
-`user_id`, `username`, `country`, `team`, `has_stadium_pass`, `is_banned`, `is_staff`, `is_board`, `is_developer`, `is_owner`, `is_am` — plus `discord_id` for Discord login.
+`user_id`, `username`, `country`, `team`, `has_stadium_pass`, `is_banned`, `is_staff`, `is_board`, `is_developer`, `is_owner`, `is_manager` — plus `discord_id` for Discord login.
 
 ## Permission model
 
-Rank: **owner > board > developer > staff > AM > player**. You can never edit someone of equal or higher rank. Every panel write hits the audit log.
+Rank: **owner > board > developer > staff > Manager > player**. You can never edit someone of equal or higher rank. Every panel write hits the audit log.
 
 | Field | Who can edit |
 |---|---|
 | country | self, staff+ |
-| team | staff+; AMs can sign to / release from their own team |
+| team | staff+; Managers can sign to / release from their own team |
 | has_stadium_pass | developer, board, owner |
 | is_banned (+ ban/unban) | staff, board, owner |
-| is_am, is_staff | board, owner |
+| is_manager, is_staff | board, owner |
 | is_developer, is_board, is_owner | owner only |
 
 The **game can never write roles** — `POST /submit/data` only accepts `robloxId`, `username`, `country`. An owner can't remove their own owner flag (lockout guard).

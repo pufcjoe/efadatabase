@@ -14,7 +14,7 @@
 
 const ROLE_RANK = {
     player: 0,
-    am: 1,
+    manager: 1,
     staff: 2,
     developer: 3,
     board: 4,
@@ -27,7 +27,7 @@ function roleOf(player) {
     if (player.is_board) return 'board';
     if (player.is_developer) return 'developer';
     if (player.is_staff) return 'staff';
-    if (player.is_am) return 'am';
+    if (player.is_manager) return 'manager';
     return 'player';
 }
 
@@ -38,14 +38,14 @@ function rankOf(player) {
 // Per-field rules:
 //   roles: roles allowed to edit this field on others
 //   self:  whether a player may edit this field on themselves
-//   amOwnTeam: AMs may set this field to their own team's name,
+//   managerOwnTeam: Managers may set this field to their own team's name,
 //              or back to 'None' if the target is currently on their team
 const FIELD_RULES = {
     country:          { roles: ['staff', 'board', 'owner'], self: true },
-    team:             { roles: ['staff', 'board', 'owner'], amOwnTeam: true },
+    team:             { roles: ['staff', 'board', 'owner'], managerOwnTeam: true },
     has_stadium_pass: { roles: ['developer', 'board', 'owner'] },
     is_banned:        { roles: ['staff', 'board', 'owner'] },
-    is_am:            { roles: ['board', 'owner'] },
+    is_manager:            { roles: ['board', 'owner'] },
     is_staff:         { roles: ['board', 'owner'] },
     is_developer:     { roles: ['owner'] },
     is_board:         { roles: ['owner'] },
@@ -55,7 +55,7 @@ const FIELD_RULES = {
 
 /**
  * Can `actor` edit `field` on `target`?
- * `actorTeam` — team name the actor is AM of (or null).
+ * `actorTeam` — team name the actor is Manager of (or null).
  * Returns { ok, reason }
  */
 function canEditField(actor, target, field, newValue, actorTeam) {
@@ -73,18 +73,18 @@ function canEditField(actor, target, field, newValue, actorTeam) {
     // Self-edit path
     if (isSelf && rule.self) return { ok: true };
 
-    // AM sign/release path for team
-    if (rule.amOwnTeam && actorRole === 'am' && actorTeam) {
+    // Manager sign/release path for team
+    if (rule.managerOwnTeam && actorRole === 'manager' && actorTeam) {
         const signing = newValue === actorTeam;
         const releasing = newValue === 'None' && target.team === actorTeam;
         if (signing || releasing) {
-            // AMs still can't touch players ranked above them
+            // Managers still can't touch players ranked above them
             if (rankOf(target) >= rankOf(actor) && !isSelf) {
                 return { ok: false, reason: 'Target outranks you' };
             }
             return { ok: true };
         }
-        return { ok: false, reason: 'AMs can only sign players to their own team or release from it' };
+        return { ok: false, reason: 'Managers can only sign players to their own team or release from it' };
     }
 
     // Role-list path
