@@ -55,7 +55,9 @@ export const ROLE_LABELS = {
     is_board: 'Board',
     is_developer: 'Developer',
     is_staff: 'Staff',
-    is_manager: 'Manager'
+    is_manager: 'Manager',
+    is_media: 'Media',
+    is_scout: 'Scout'
 };
 
 export function topRole(p) {
