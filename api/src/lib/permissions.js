@@ -49,7 +49,9 @@ const FIELD_RULES = {
     is_staff:         { roles: ['board', 'owner'] },
     is_developer:     { roles: ['owner'] },
     is_board:         { roles: ['owner'] },
-    is_owner:         { roles: ['owner'] }
+    is_owner:         { roles: ['owner'] },
+    is_media:         { roles: ['board', 'owner'] },
+    is_scout:         { roles: ['board', 'owner'] },
     // username / user_id / discord_id are identity fields, synced — never hand-edited
 };
 
