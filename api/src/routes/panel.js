@@ -34,7 +34,7 @@ router.get('/players', async (req, res) => {
 
         let query = supabase
             .from('players')
-            .select('user_id, username, country, team, has_stadium_pass, is_banned, is_manager, is_staff, is_developer, is_board, is_owner', { count: 'exact' })
+            .select('user_id, username, country, team, has_stadium_pass, is_banned, is_manager, is_staff, is_developer, is_board, is_owner, is_media, is_scout', { count: 'exact' })
             .order('username', { ascending: true })
             .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
@@ -42,7 +42,7 @@ router.get('/players', async (req, res) => {
         if (req.query.team) query = query.eq('team', req.query.team);
         if (req.query.role) {
             const col = `is_${req.query.role}`;
-            if (['is_manager', 'is_staff', 'is_developer', 'is_board', 'is_owner', 'is_banned'].includes(col)) {
+            if (['is_manager', 'is_staff', 'is_developer', 'is_board', 'is_owner', 'is_banned', 'is_media', 'is_scout'].includes(col)) {
                 query = query.eq(col, true);
             }
         }
@@ -69,11 +69,14 @@ router.get('/players/:userId', async (req, res) => {
             .eq('player_user_id', target.user_id)
             .order('issued_at', { ascending: false })
             .limit(10);
+        const { data: honourRows } = await supabase
+            .from('honours').select('honour').eq('user_id', target.user_id);
 
         res.json({
             player: target,
             editable: editableFields(req.player, target, team),
             banHistory: banHistory || [],
+            honours: (honourRows || []).map(r => r.honour),
             viewerRole: roleOf(req.player)
         });
     } catch (err) {
@@ -167,6 +170,49 @@ router.post('/players/:userId/unban', async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error('[EFA] unban error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ---- honours ------------------------------------------------
+
+const HONOUR_NAMES = ['World Cup', 'Euros', 'Champions League',
+    'Europa League', 'Premier League', 'FA Cup'];
+
+// POST /panel/players/:userId/honours { honour }
+router.post('/players/:userId/honours', requireMinRole('board'), async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        const { honour } = req.body;
+        if (!HONOUR_NAMES.includes(honour)) return res.status(400).json({ error: 'Invalid honour' });
+
+        const { error } = await supabase.from('honours')
+            .insert({ user_id: userId, honour, awarded_by: String(req.player.user_id) });
+        if (error && error.code !== '23505') throw error; // 23505 = already holds it
+
+        await audit('honour_grant', userId, req.player.user_id, { honour });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[EFA] POST honours error:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// DELETE /panel/players/:userId/honours { honour }
+router.delete('/players/:userId/honours', requireMinRole('board'), async (req, res) => {
+    try {
+        const userId = parseInt(req.params.userId);
+        const { honour } = req.body;
+        if (!HONOUR_NAMES.includes(honour)) return res.status(400).json({ error: 'Invalid honour' });
+
+        const { error } = await supabase.from('honours')
+            .delete().eq('user_id', userId).eq('honour', honour);
+        if (error) throw error;
+
+        await audit('honour_revoke', userId, req.player.user_id, { honour });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('[EFA] DELETE honours error:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
