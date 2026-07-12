@@ -42,6 +42,8 @@ export default function PlayerPage() {
     }
 
     const { player, editable, banHistory } = data;
+    const honours = data.honours || [];
+    const canHonours = ['board', 'owner'].includes(data.viewerRole);
     const isSelf = me.player.user_id === player.user_id;
     const can = f => editable.includes(f);
 
@@ -152,6 +154,21 @@ export default function PlayerPage() {
                         </div>
                         <Toggle on={player[field]} disabled={!can(field)}
                             onChange={v => save({ [field]: v })} />
+                    </div>
+                ))}
+            </div>
+
+            <div className="section-title">Honours</div>
+            <div className="grid">
+                {['World Cup', 'Euros', 'Champions League', 'Europa League', 'Premier League', 'FA Cup'].map(h => (
+                    <div key={h} className={`field-card ${canHonours ? '' : 'locked'}`}>
+                        <div>
+                            <div className="label">{h}</div>
+                            <div className="value">{honours.includes(h) ? 'Held' : '—'}</div>
+                        </div>
+                        <Toggle on={honours.includes(h)} disabled={!canHonours}
+                            onChange={v => (v ? api.grantHonour(userId, h) : api.revokeHonour(userId, h))
+                                .then(load).catch(e => setMsg({ kind: 'error', text: e.message }))} />
                     </div>
                 ))}
             </div>
