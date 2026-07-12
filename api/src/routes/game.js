@@ -42,6 +42,9 @@ router.get('/data/:userId', gameAuth, async (req, res) => {
         const { data: honourRows } = await supabase
             .from('honours').select('honour').eq('user_id', userId);
 
+        console.log('[EFA] Honour rows:', honourRows);
+        console.log('[EFA] Honour response:', (honourRows || []).map(r => r.honour));
+
         res.json({
             username: data.username,
             country: data.country,
