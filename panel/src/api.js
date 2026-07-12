@@ -38,6 +38,8 @@ export const api = {
     createTeam: (t) => request('/panel/teams', { method: 'POST', body: JSON.stringify(t) }),
     updateTeam: (id, t) => request(`/panel/teams/${id}`, { method: 'PATCH', body: JSON.stringify(t) }),
     deleteTeam: (id) => request(`/panel/teams/${id}`, { method: 'DELETE' }),
+    grantHonour: (id, honour) => request(`/panel/players/${id}/honours`, { method: 'POST', body: JSON.stringify({ honour }) }),
+    revokeHonour: (id, honour) => request(`/panel/players/${id}/honours`, { method: 'DELETE', body: JSON.stringify({ honour }) }),
     audit: (page = 0) => request(`/panel/audit?page=${page}`)
 };
 
@@ -66,5 +68,7 @@ export function topRole(p) {
     if (p.is_developer) return 'Developer';
     if (p.is_staff) return 'Staff';
     if (p.is_manager) return 'AM';
+    if (p.is_media) return 'Media'; 
+    if (p.is_scout) return 'Scout';
     return 'Player';
 }
