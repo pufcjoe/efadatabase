@@ -54,7 +54,7 @@ router.get('/data/:userId', gameAuth, async (req, res) => {
             isBoard: data.is_board,
             isMedia: data.is_media, 
             isScout: data.is_scout, 
-            honours: (honourRows || []).map(r => r.honour)
+            honours: (honourRows || []).map(r => r.honour),
             isOwner: data.is_owner
         });
     } catch (err) {
