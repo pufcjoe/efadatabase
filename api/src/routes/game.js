@@ -21,6 +21,9 @@ const DEFAULTS = {
     isStaff: false,
     isDeveloper: false,
     isBoard: false,
+    isMedia: false,
+    isScout: false,
+    honours: [],
     isOwner: false
 };
 
@@ -36,6 +39,9 @@ router.get('/data/:userId', gameAuth, async (req, res) => {
 
         if (error) throw error;
 
+        const { data: honourRows } = await supabase
+            .from('honours').select('honour').eq('user_id', userId);
+
         res.json({
             username: data.username,
             country: data.country,
@@ -46,6 +52,9 @@ router.get('/data/:userId', gameAuth, async (req, res) => {
             isStaff: data.is_staff,
             isDeveloper: data.is_developer,
             isBoard: data.is_board,
+            isMedia: data.is_media, 
+            isScout: data.is_scout, 
+            honours: (honourRows || []).map(r => r.honour)
             isOwner: data.is_owner
         });
     } catch (err) {
